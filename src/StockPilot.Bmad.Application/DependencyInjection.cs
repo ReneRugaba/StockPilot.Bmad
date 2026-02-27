@@ -15,6 +15,7 @@ public static class DependencyInjection
         services.AddScoped<WarehouseService>();
         services.AddScoped<LocationService>();
         services.AddScoped<InboundLotService>();
+        services.AddScoped<LotQueryService>();
         return services;
     }
 }

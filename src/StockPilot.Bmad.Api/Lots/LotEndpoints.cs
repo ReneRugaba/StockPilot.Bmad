@@ -31,7 +31,41 @@ public static class LotEndpoints
             })
             .WithName("InboundLot");
 
+        group.MapGet("/", async (LotQueryService service, CancellationToken ct) =>
+            {
+                var result = await service.GetAllAsync(ct);
+                return Results.Ok(result);
+            })
+            .WithName("GetLots");
+
+        group.MapGet("/{lotId:guid}", async (Guid lotId, LotQueryService service, CancellationToken ct) =>
+            {
+                try
+                {
+                    var result = await service.GetByIdAsync(lotId, ct);
+                    return Results.Ok(result);
+                }
+                catch (LotNotFoundException)
+                {
+                    return Results.NotFound();
+                }
+            })
+            .WithName("GetLotById");
+
+        app.MapGet("/clients/{clientId:guid}/lots", async (Guid clientId, LotQueryService service, CancellationToken ct) =>
+            {
+                var result = await service.GetByClientIdAsync(clientId, ct);
+                return Results.Ok(result);
+            })
+            .WithName("GetLotsByClient");
+
+        app.MapGet("/warehouses/{warehouseId:guid}/lots", async (Guid warehouseId, LotQueryService service, CancellationToken ct) =>
+            {
+                var result = await service.GetByWarehouseIdAsync(warehouseId, ct);
+                return Results.Ok(result);
+            })
+            .WithName("GetLotsByWarehouse");
+
         return app;
     }
 }
-
