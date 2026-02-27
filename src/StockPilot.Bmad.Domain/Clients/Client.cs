@@ -3,8 +3,8 @@
 public class Client
 {
     public Guid ClientId { get; private set; }
-    public string Name { get; private set; }
-    public string ContactEmail { get; private set; }
+    public string Name { get; private set; } = string.Empty;
+    public string ContactEmail { get; private set; } = string.Empty;
     public ClientStatus Status { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public DateTime UpdatedAt { get; private set; }
@@ -68,4 +68,3 @@ public class Client
         return trimmed.Contains("@") && trimmed.Contains('.') && trimmed.Length >= 3;
     }
 }
-

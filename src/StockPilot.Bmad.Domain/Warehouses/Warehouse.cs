@@ -3,8 +3,8 @@
 public class Warehouse
 {
     public Guid WarehouseId { get; private set; }
-    public string Name { get; private set; }
-    public string Address { get; private set; }
+    public string Name { get; private set; } = string.Empty;
+    public string Address { get; private set; } = string.Empty;
     public WarehouseStatus Status { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public DateTime UpdatedAt { get; private set; }
@@ -48,4 +48,3 @@ public class Warehouse
         UpdatedAt = utcNow;
     }
 }
-

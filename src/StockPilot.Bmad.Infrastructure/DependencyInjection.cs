@@ -2,8 +2,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using StockPilot.Bmad.Application.Clients;
 using StockPilot.Bmad.Application.Warehouses;
+using StockPilot.Bmad.Application.Locations;
 using StockPilot.Bmad.Infrastructure.Clients;
 using StockPilot.Bmad.Infrastructure.Warehouses;
+using StockPilot.Bmad.Infrastructure.Locations;
 
 namespace StockPilot.Bmad.Infrastructure;
 
@@ -16,6 +18,7 @@ public static class DependencyInjection
 
         services.AddScoped<IClientRepository, ClientRepository>();
         services.AddScoped<IWarehouseRepository, WarehouseRepository>();
+        services.AddScoped<ILocationRepository, LocationRepository>();
 
         return services;
     }
