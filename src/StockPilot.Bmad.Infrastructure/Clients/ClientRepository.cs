@@ -34,5 +34,12 @@ public class ClientRepository : IClientRepository
             .OrderBy(c => c.Name)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Clients
+            .AsNoTracking()
+            .AnyAsync(c => c.ClientId == id, cancellationToken);
+    }
 }
 

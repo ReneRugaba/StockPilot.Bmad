@@ -50,5 +50,17 @@ public class LocationRepository : ILocationRepository
             .AsNoTracking()
             .AnyAsync(w => w.WarehouseId == warehouseId, cancellationToken);
     }
-}
 
+    public async Task<bool> LocationExistsAsync(Guid locationId, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Locations
+            .AsNoTracking()
+            .AnyAsync(l => l.LocationId == locationId, cancellationToken);
+    }
+
+    public async Task UpdateStatusAsync(Location location, CancellationToken cancellationToken = default)
+    {
+        _dbContext.Locations.Update(location);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+}
