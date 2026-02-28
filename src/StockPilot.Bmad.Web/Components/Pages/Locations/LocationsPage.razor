@@ -1,0 +1,79 @@
+﻿@page "/locations"
+@inject ApiClient Api
+
+<PageTitle>Emplacements</PageTitle>
+
+<h2>Emplacements</h2>
+
+<div class="mb-3">
+    <label>Filtrer par entrepôt :</label>
+    <select class="form-select w-auto d-inline-block ms-2" @onchange="OnWarehouseChanged">
+        <option value="">— Tous —</option>
+        @foreach (var w in _warehouses)
+        {
+            <option value="@w.WarehouseId">@w.Name</option>
+        }
+    </select>
+</div>
+
+@if (_loading)
+{
+    <p>Chargement...</p>
+}
+else if (_error is not null)
+{
+    <div class="alert alert-danger">Erreur : @_error</div>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr><th>Code</th><th>Label</th><th>Statut</th><th>Entrepôt</th><th>Créé le</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var l in _locations)
+            {
+                <tr>
+                    <td>@l.Code</td>
+                    <td>@(l.Label ?? "—")</td>
+                    <td>@l.Status</td>
+                    <td>@(_warehouses.FirstOrDefault(w => w.WarehouseId == l.WarehouseId)?.Name ?? "—")</td>
+                    <td>@l.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<LocationDto> _locations = new();
+    private List<WarehouseDto> _warehouses = new();
+    private bool _loading = true;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _warehouses = await Api.GetWarehousesAsync() ?? new();
+            _locations = await Api.GetLocationsAsync() ?? new();
+        }
+        catch (Exception ex) { _error = ex.Message; }
+        finally { _loading = false; }
+    }
+
+    private async Task OnWarehouseChanged(ChangeEventArgs e)
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            var val = e.Value?.ToString();
+            _locations = string.IsNullOrEmpty(val)
+                ? await Api.GetLocationsAsync() ?? new()
+                : await Api.GetLocationsByWarehouseAsync(Guid.Parse(val)) ?? new();
+        }
+        catch (Exception ex) { _error = ex.Message; }
+        finally { _loading = false; }
+    }
+}

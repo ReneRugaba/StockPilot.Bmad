@@ -1,0 +1,50 @@
+﻿@page "/lots"
+@inject ApiClient Api
+
+<PageTitle>Lots</PageTitle>
+
+<h2>Lots</h2>
+
+@if (_loading)
+{
+    <p>Chargement...</p>
+}
+else if (_error is not null)
+{
+    <div class="alert alert-danger">Erreur : @_error</div>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr><th>Référence</th><th>Statut</th><th>Client</th><th>Emplacement</th><th>Entrepôt</th><th>Créé le</th><th></th></tr>
+        </thead>
+        <tbody>
+            @foreach (var l in _lots)
+            {
+                <tr>
+                    <td>@l.Reference</td>
+                    <td><span class="badge bg-secondary">@l.Status</span></td>
+                    <td>@l.ClientName</td>
+                    <td>@l.LocationCode</td>
+                    <td>@l.WarehouseName</td>
+                    <td>@l.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</td>
+                    <td><a href="/lots/@l.LotId">Détail</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<LotDetailDto> _lots = new();
+    private bool _loading = true;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try { _lots = await Api.GetLotsAsync() ?? new(); }
+        catch (Exception ex) { _error = ex.Message; }
+        finally { _loading = false; }
+    }
+}

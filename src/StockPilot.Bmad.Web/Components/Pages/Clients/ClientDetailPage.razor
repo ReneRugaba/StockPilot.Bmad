@@ -1,0 +1,43 @@
+﻿@page "/clients/{Id:guid}"
+@inject ApiClient Api
+
+<PageTitle>Détail client</PageTitle>
+
+<a href="/clients">← Retour aux clients</a>
+
+@if (_loading)
+{
+    <p>Chargement...</p>
+}
+else if (_error is not null)
+{
+    <div class="alert alert-danger">Erreur : @_error</div>
+}
+else if (_client is null)
+{
+    <div class="alert alert-warning">Client introuvable.</div>
+}
+else
+{
+    <h2 class="mt-3">@_client.Name</h2>
+    <table class="table table-bordered w-auto mt-3">
+        <tr><th>ID</th><td>@_client.ClientId</td></tr>
+        <tr><th>Email</th><td>@_client.ContactEmail</td></tr>
+        <tr><th>Statut</th><td>@_client.Status</td></tr>
+        <tr><th>Créé le</th><td>@_client.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td></tr>
+    </table>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+    private ClientDto? _client;
+    private bool _loading = true;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try { _client = await Api.GetClientAsync(Id); }
+        catch (Exception ex) { _error = ex.Message; }
+        finally { _loading = false; }
+    }
+}

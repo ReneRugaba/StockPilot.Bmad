@@ -1,0 +1,85 @@
+﻿@page "/lots/{Id:guid}"
+@inject ApiClient Api
+
+<PageTitle>Détail lot</PageTitle>
+
+<a href="/lots">← Retour aux lots</a>
+
+@if (_loading)
+{
+    <p>Chargement...</p>
+}
+else if (_error is not null)
+{
+    <div class="alert alert-danger">Erreur : @_error</div>
+}
+else if (_lot is null)
+{
+    <div class="alert alert-warning">Lot introuvable.</div>
+}
+else
+{
+    <h2 class="mt-3">Lot — @_lot.Reference</h2>
+
+    <table class="table table-bordered w-auto mt-3">
+        <tr><th>ID</th><td>@_lot.LotId</td></tr>
+        <tr><th>Référence</th><td>@_lot.Reference</td></tr>
+        <tr><th>Description</th><td>@(_lot.Description ?? "—")</td></tr>
+        <tr><th>Statut</th><td><span class="badge bg-secondary">@_lot.Status</span></td></tr>
+        <tr><th>Client</th><td><a href="/clients/@_lot.ClientId">@_lot.ClientName</a></td></tr>
+        <tr><th>Emplacement</th><td>@_lot.LocationCode</td></tr>
+        <tr><th>Entrepôt</th><td><a href="/warehouses/@_lot.WarehouseId">@_lot.WarehouseName</a></td></tr>
+        <tr><th>Créé le</th><td>@_lot.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td></tr>
+    </table>
+
+    <h4 class="mt-4">Historique des mouvements</h4>
+
+    @if (_loadingMovements)
+    {
+        <p>Chargement des mouvements...</p>
+    }
+    else if (!_movements.Any())
+    {
+        <p class="text-muted">Aucun mouvement enregistré.</p>
+    }
+    else
+    {
+        <table class="table table-sm table-striped">
+            <thead>
+                <tr><th>Date</th><th>Type</th><th>Depuis</th><th>Vers</th><th>Notes</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var m in _movements)
+                {
+                    <tr>
+                        <td>@m.OccurredAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                        <td><span class="badge bg-primary">@m.Type</span></td>
+                        <td>@(m.FromLocationId?.ToString() ?? "—")</td>
+                        <td>@(m.ToLocationId?.ToString() ?? "—")</td>
+                        <td>@(m.Reason ?? "—")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+    private LotDetailDto? _lot;
+    private List<MovementDto> _movements = new();
+    private bool _loading = true;
+    private bool _loadingMovements = true;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _lot = await Api.GetLotAsync(Id);
+            _movements = await Api.GetMovementsByLotAsync(Id) ?? new();
+        }
+        catch (Exception ex) { _error = ex.Message; }
+        finally { _loading = false; _loadingMovements = false; }
+    }
+}

@@ -1,0 +1,71 @@
+﻿@page "/warehouses/{Id:guid}"
+@inject ApiClient Api
+
+<PageTitle>Détail entrepôt</PageTitle>
+
+<a href="/warehouses">← Retour aux entrepôts</a>
+
+@if (_loading)
+{
+    <p>Chargement...</p>
+}
+else if (_error is not null)
+{
+    <div class="alert alert-danger">Erreur : @_error</div>
+}
+else if (_warehouse is null)
+{
+    <div class="alert alert-warning">Entrepôt introuvable.</div>
+}
+else
+{
+    <h2 class="mt-3">@_warehouse.Name</h2>
+    <table class="table table-bordered w-auto mt-3">
+        <tr><th>ID</th><td>@_warehouse.WarehouseId</td></tr>
+        <tr><th>Adresse</th><td>@_warehouse.Address</td></tr>
+        <tr><th>Statut</th><td>@_warehouse.Status</td></tr>
+        <tr><th>Créé le</th><td>@_warehouse.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td></tr>
+    </table>
+
+    <h4 class="mt-4">Emplacements</h4>
+    @if (_loadingLocations)
+    {
+        <p>Chargement des emplacements...</p>
+    }
+    else
+    {
+        <table class="table table-sm">
+            <thead><tr><th>Code</th><th>Label</th><th>Statut</th></tr></thead>
+            <tbody>
+                @foreach (var l in _locations)
+                {
+                    <tr>
+                        <td>@l.Code</td>
+                        <td>@(l.Label ?? "—")</td>
+                        <td>@l.Status</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+    private WarehouseDto? _warehouse;
+    private List<LocationDto> _locations = new();
+    private bool _loading = true;
+    private bool _loadingLocations = true;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _warehouse = await Api.GetWarehouseAsync(Id);
+            _locations = await Api.GetLocationsByWarehouseAsync(Id) ?? new();
+        }
+        catch (Exception ex) { _error = ex.Message; }
+        finally { _loading = false; _loadingLocations = false; }
+    }
+}

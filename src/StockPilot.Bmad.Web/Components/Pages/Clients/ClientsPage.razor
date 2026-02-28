@@ -1,0 +1,50 @@
+﻿@page "/clients"
+@inject ApiClient Api
+
+<PageTitle>Clients</PageTitle>
+
+<h2>Clients</h2>
+
+@if (_loading)
+{
+    <p>Chargement...</p>
+}
+else if (_error is not null)
+{
+    <div class="alert alert-danger">Erreur : @_error</div>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Nom</th><th>Email</th><th>Statut</th><th>Créé le</th><th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var c in _clients)
+            {
+                <tr>
+                    <td>@c.Name</td>
+                    <td>@c.ContactEmail</td>
+                    <td>@c.Status</td>
+                    <td>@c.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</td>
+                    <td><a href="/clients/@c.ClientId">Détail</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<ClientDto> _clients = new();
+    private bool _loading = true;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try { _clients = await Api.GetClientsAsync() ?? new(); }
+        catch (Exception ex) { _error = ex.Message; }
+        finally { _loading = false; }
+    }
+}
