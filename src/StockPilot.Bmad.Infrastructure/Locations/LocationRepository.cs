@@ -60,6 +60,12 @@ public class LocationRepository : ILocationRepository
 
     public async Task UpdateStatusAsync(Location location, CancellationToken cancellationToken = default)
     {
+        await UpdateAsync(location, cancellationToken);
+    }
+
+    public async Task UpdateAsync(Location location, CancellationToken cancellationToken = default)
+    {
+        // Entité chargée en AsNoTracking : on doit l'attacher pour persister les modifications.
         _dbContext.Locations.Update(location);
         await _dbContext.SaveChangesAsync(cancellationToken);
     }

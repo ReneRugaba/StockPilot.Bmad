@@ -101,5 +101,126 @@ public class LocationServiceTests
 
         Assert.Null(result);
     }
-}
 
+    [Fact]
+    public async Task UpdateLocation_ValidRequest_UpdatesLocationAndReturnsDto()
+    {
+        var now = DateTime.UtcNow;
+        var warehouseId = Guid.NewGuid();
+        var existing = Location.Create(warehouseId, "A-01-01", "Rack", now);
+
+        var repoMock = new Mock<ILocationRepository>();
+        repoMock
+            .Setup(r => r.GetByIdAsync(existing.LocationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existing);
+        repoMock
+            .Setup(r => r.UpdateAsync(existing, It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var service = new LocationService(repoMock.Object);
+
+        var request = new UpdateLocationRequest { Code = "B-02-02", Label = "Rack B2" };
+        var result = await service.UpdateAsync(existing.LocationId, request);
+
+        Assert.Equal(existing.LocationId, result.LocationId);
+        Assert.Equal("B-02-02", result.Code);
+        Assert.Equal("Rack B2", result.Label);
+
+        repoMock.Verify(r => r.UpdateAsync(It.IsAny<Location>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task UpdateLocation_EmptyCode_ThrowsValidationException()
+    {
+        var repoMock = new Mock<ILocationRepository>();
+        var service = new LocationService(repoMock.Object);
+
+        var request = new UpdateLocationRequest { Code = " ", Label = "X" };
+        await Assert.ThrowsAsync<LocationValidationException>(() => service.UpdateAsync(Guid.NewGuid(), request));
+    }
+
+    [Fact]
+    public async Task UpdateLocation_NotFound_ThrowsNotFoundException()
+    {
+        var repoMock = new Mock<ILocationRepository>();
+        repoMock
+            .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Location?)null);
+
+        var service = new LocationService(repoMock.Object);
+
+        var request = new UpdateLocationRequest { Code = "A-01-01" };
+        await Assert.ThrowsAsync<LocationNotFoundException>(() => service.UpdateAsync(Guid.NewGuid(), request));
+    }
+
+    [Fact]
+    public async Task DisableLocation_WhenAvailable_SetsMaintenanceAndPersists()
+    {
+        var now = DateTime.UtcNow;
+        var existing = Location.Create(Guid.NewGuid(), "A-01-01", null, now);
+
+        var repoMock = new Mock<ILocationRepository>();
+        repoMock
+            .Setup(r => r.GetByIdAsync(existing.LocationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existing);
+        repoMock
+            .Setup(r => r.UpdateAsync(existing, It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var service = new LocationService(repoMock.Object);
+
+        await service.DisableAsync(existing.LocationId);
+
+        Assert.Equal(LocationStatus.Maintenance, existing.Status);
+        repoMock.Verify(r => r.UpdateAsync(It.IsAny<Location>(), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task DisableLocation_WhenAlreadyMaintenance_IsIdempotent_DoesNotPersist()
+    {
+        var now = DateTime.UtcNow;
+        var existing = Location.Create(Guid.NewGuid(), "A-01-01", null, now);
+        existing.SetStatus(LocationStatus.Maintenance, now);
+
+        var repoMock = new Mock<ILocationRepository>();
+        repoMock
+            .Setup(r => r.GetByIdAsync(existing.LocationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existing);
+
+        var service = new LocationService(repoMock.Object);
+
+        await service.DisableAsync(existing.LocationId);
+
+        repoMock.Verify(r => r.UpdateAsync(It.IsAny<Location>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task DisableLocation_WhenOccupied_ThrowsOccupiedException()
+    {
+        var now = DateTime.UtcNow;
+        var existing = Location.Create(Guid.NewGuid(), "A-01-01", null, now);
+        existing.SetStatus(LocationStatus.Occupied, now);
+
+        var repoMock = new Mock<ILocationRepository>();
+        repoMock
+            .Setup(r => r.GetByIdAsync(existing.LocationId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existing);
+
+        var service = new LocationService(repoMock.Object);
+
+        await Assert.ThrowsAsync<LocationOccupiedException>(() => service.DisableAsync(existing.LocationId));
+    }
+
+    [Fact]
+    public async Task DisableLocation_NotFound_ThrowsNotFoundException()
+    {
+        var repoMock = new Mock<ILocationRepository>();
+        repoMock
+            .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Location?)null);
+
+        var service = new LocationService(repoMock.Object);
+
+        await Assert.ThrowsAsync<LocationNotFoundException>(() => service.DisableAsync(Guid.NewGuid()));
+    }
+}

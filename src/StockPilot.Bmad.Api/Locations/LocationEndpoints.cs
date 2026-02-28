@@ -51,7 +51,48 @@ public static class LocationEndpoints
             })
             .WithName("GetLocationsByWarehouse");
 
+        group.MapPut("/{locationId:guid}", async (Guid locationId, [FromBody] UpdateLocationRequestDto dto, LocationService service, CancellationToken ct) =>
+            {
+                try
+                {
+                    var request = new UpdateLocationRequest
+                    {
+                        Code = dto.Code,
+                        Label = dto.Label
+                    };
+
+                    var result = await service.UpdateAsync(locationId, request, ct);
+                    return Results.Ok(result);
+                }
+                catch (LocationValidationException ex)
+                {
+                    return Results.BadRequest(new { error = ex.Message });
+                }
+                catch (LocationNotFoundException)
+                {
+                    return Results.NotFound();
+                }
+            })
+            .WithName("UpdateLocation");
+
+        group.MapDelete("/{locationId:guid}", async (Guid locationId, LocationService service, CancellationToken ct) =>
+            {
+                try
+                {
+                    await service.DisableAsync(locationId, ct);
+                    return Results.NoContent();
+                }
+                catch (LocationOccupiedException ex)
+                {
+                    return Results.BadRequest(new { error = ex.Message });
+                }
+                catch (LocationNotFoundException)
+                {
+                    return Results.NotFound();
+                }
+            })
+            .WithName("DisableLocation");
+
         return app;
     }
 }
-

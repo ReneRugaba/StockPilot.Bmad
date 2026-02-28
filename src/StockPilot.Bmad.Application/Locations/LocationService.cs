@@ -55,6 +55,38 @@ public class LocationService
         return locations.Select(ToDto).ToList();
     }
 
+    public async Task<LocationDto> UpdateAsync(Guid locationId, UpdateLocationRequest request, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.Code))
+            throw new LocationValidationException("Location code is required.");
+
+        var location = await _repository.GetByIdAsync(locationId, cancellationToken);
+        if (location is null)
+            throw new LocationNotFoundException(locationId);
+
+        location.Update(request.Code, request.Label, DateTime.UtcNow);
+        await _repository.UpdateAsync(location, cancellationToken);
+
+        return ToDto(location);
+    }
+
+    public async Task DisableAsync(Guid locationId, CancellationToken cancellationToken = default)
+    {
+        var location = await _repository.GetByIdAsync(locationId, cancellationToken);
+        if (location is null)
+            throw new LocationNotFoundException(locationId);
+
+        // Idempotent : déjà MAINTENANCE → succès sans erreur
+        if (location.Status == LocationStatus.Maintenance)
+            return;
+
+        if (location.Status == LocationStatus.Occupied)
+            throw new LocationOccupiedException(locationId);
+
+        location.DisableToMaintenance(DateTime.UtcNow);
+        await _repository.UpdateAsync(location, cancellationToken);
+    }
+
     private static LocationDto ToDto(Location location) => new()
     {
         LocationId = location.LocationId,
@@ -66,4 +98,3 @@ public class LocationService
         UpdatedAt = location.UpdatedAt
     };
 }
-

@@ -11,4 +11,5 @@ public interface ILocationRepository
     Task<bool> WarehouseExistsAsync(Guid warehouseId, CancellationToken cancellationToken = default);
     Task<bool> LocationExistsAsync(Guid locationId, CancellationToken cancellationToken = default);
     Task UpdateStatusAsync(Location location, CancellationToken cancellationToken = default);
+    Task UpdateAsync(Location location, CancellationToken cancellationToken = default);
 }

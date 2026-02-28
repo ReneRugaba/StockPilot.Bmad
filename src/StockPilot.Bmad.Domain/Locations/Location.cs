@@ -50,5 +50,20 @@ public class Location
         Status = status;
         UpdatedAt = utcNow;
     }
-}
 
+    public void Update(string code, string? label, DateTime utcNow)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+            throw new ArgumentException("Location code is required", nameof(code));
+
+        Code = code.Trim();
+        Label = string.IsNullOrWhiteSpace(label) ? null : label.Trim();
+        UpdatedAt = utcNow;
+    }
+
+    public void DisableToMaintenance(DateTime utcNow)
+    {
+        Status = LocationStatus.Maintenance;
+        UpdatedAt = utcNow;
+    }
+}
