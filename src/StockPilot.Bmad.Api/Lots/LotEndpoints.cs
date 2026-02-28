@@ -79,6 +79,54 @@ public static class LotEndpoints
             })
             .WithName("MoveInternalLot");
 
+        group.MapPost("/transfer/dispatch", async ([FromBody] TransferDispatchRequestDto dto, TransferLotService service, CancellationToken ct) =>
+            {
+                try
+                {
+                    var request = new TransferDispatchRequest
+                    {
+                        LotId = dto.LotId,
+                        DestinationLocationId = dto.DestinationLocationId,
+                        Notes = dto.Notes
+                    };
+                    var result = await service.DispatchAsync(request, ct);
+                    return Results.Ok(result);
+                }
+                catch (LotNotFoundException)
+                {
+                    return Results.NotFound();
+                }
+                catch (TransferLotValidationException ex)
+                {
+                    return Results.BadRequest(new { error = ex.Message });
+                }
+            })
+            .WithName("TransferDispatch");
+
+        group.MapPost("/transfer/receive", async ([FromBody] TransferReceiveRequestDto dto, TransferLotService service, CancellationToken ct) =>
+            {
+                try
+                {
+                    var request = new TransferReceiveRequest
+                    {
+                        LotId = dto.LotId,
+                        DestinationLocationId = dto.DestinationLocationId,
+                        Notes = dto.Notes
+                    };
+                    var result = await service.ReceiveAsync(request, ct);
+                    return Results.Ok(result);
+                }
+                catch (LotNotFoundException)
+                {
+                    return Results.NotFound();
+                }
+                catch (TransferLotValidationException ex)
+                {
+                    return Results.BadRequest(new { error = ex.Message });
+                }
+            })
+            .WithName("TransferReceive");
+
         group.MapGet("/", async (LotQueryService service, CancellationToken ct) =>
             {
                 var result = await service.GetAllAsync(ct);

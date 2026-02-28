@@ -75,6 +75,32 @@ public class Lot
         UpdatedAt = utcNow;
     }
 
+    public void Dispatch(DateTime utcNow)
+    {
+        if (Status != LotStatus.Stored)
+            throw new InvalidOperationException($"Cannot dispatch a lot with status '{Status}'. Lot must be in 'Stored' status.");
+
+        if (LocationId is null)
+            throw new InvalidOperationException("Cannot dispatch a lot that has no location assigned.");
+
+        Status = LotStatus.InTransit;
+        LocationId = null;
+        UpdatedAt = utcNow;
+    }
+
+    public void Receive(Guid destinationLocationId, DateTime utcNow)
+    {
+        if (Status != LotStatus.InTransit)
+            throw new InvalidOperationException($"Cannot receive a lot with status '{Status}'. Lot must be in 'InTransit' status.");
+
+        if (destinationLocationId == Guid.Empty)
+            throw new ArgumentException("DestinationLocationId is required.", nameof(destinationLocationId));
+
+        Status = LotStatus.Stored;
+        LocationId = destinationLocationId;
+        UpdatedAt = utcNow;
+    }
+
     public void SetStatus(LotStatus status, DateTime utcNow)
     {
         Status = status;

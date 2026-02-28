@@ -99,4 +99,48 @@ public class Movement
             performedBy,
             string.IsNullOrWhiteSpace(notes) ? null : notes.Trim());
     }
+
+    public static Movement CreateTransferDispatch(Guid lotId, Guid fromLocationId, Guid performedBy, DateTime utcNow, string? notes = null)
+    {
+        if (lotId == Guid.Empty)
+            throw new ArgumentException("LotId is required", nameof(lotId));
+
+        if (fromLocationId == Guid.Empty)
+            throw new ArgumentException("FromLocationId is required", nameof(fromLocationId));
+
+        if (performedBy == Guid.Empty)
+            throw new ArgumentException("PerformedBy is required", nameof(performedBy));
+
+        return new Movement(
+            Guid.NewGuid(),
+            lotId,
+            MovementType.Transfer,
+            fromLocationId,
+            null,
+            utcNow,
+            performedBy,
+            string.IsNullOrWhiteSpace(notes) ? null : notes.Trim());
+    }
+
+    public static Movement CreateTransferReceive(Guid lotId, Guid toLocationId, Guid performedBy, DateTime utcNow, string? notes = null)
+    {
+        if (lotId == Guid.Empty)
+            throw new ArgumentException("LotId is required", nameof(lotId));
+
+        if (toLocationId == Guid.Empty)
+            throw new ArgumentException("ToLocationId is required", nameof(toLocationId));
+
+        if (performedBy == Guid.Empty)
+            throw new ArgumentException("PerformedBy is required", nameof(performedBy));
+
+        return new Movement(
+            Guid.NewGuid(),
+            lotId,
+            MovementType.Transfer,
+            null,
+            toLocationId,
+            utcNow,
+            performedBy,
+            string.IsNullOrWhiteSpace(notes) ? null : notes.Trim());
+    }
 }
