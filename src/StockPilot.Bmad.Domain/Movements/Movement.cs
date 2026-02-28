@@ -74,4 +74,29 @@ public class Movement
             performedBy,
             string.IsNullOrWhiteSpace(notes) ? null : notes.Trim());
     }
+
+    public static Movement CreateInternalMove(Guid lotId, Guid fromLocationId, Guid toLocationId, Guid performedBy, DateTime utcNow, string? notes = null)
+    {
+        if (lotId == Guid.Empty)
+            throw new ArgumentException("LotId is required", nameof(lotId));
+
+        if (fromLocationId == Guid.Empty)
+            throw new ArgumentException("FromLocationId is required", nameof(fromLocationId));
+
+        if (toLocationId == Guid.Empty)
+            throw new ArgumentException("ToLocationId is required", nameof(toLocationId));
+
+        if (performedBy == Guid.Empty)
+            throw new ArgumentException("PerformedBy is required", nameof(performedBy));
+
+        return new Movement(
+            Guid.NewGuid(),
+            lotId,
+            MovementType.InternalMove,
+            fromLocationId,
+            toLocationId,
+            utcNow,
+            performedBy,
+            string.IsNullOrWhiteSpace(notes) ? null : notes.Trim());
+    }
 }

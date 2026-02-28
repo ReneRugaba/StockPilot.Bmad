@@ -55,6 +55,30 @@ public static class LotEndpoints
             })
             .WithName("OutboundLot");
 
+        group.MapPost("/move", async ([FromBody] MoveInternalLotRequestDto dto, MoveInternalLotService service, CancellationToken ct) =>
+            {
+                try
+                {
+                    var request = new MoveInternalLotRequest
+                    {
+                        LotId = dto.LotId,
+                        DestinationLocationId = dto.DestinationLocationId,
+                        Notes = dto.Notes
+                    };
+                    var result = await service.MoveAsync(request, ct);
+                    return Results.Ok(result);
+                }
+                catch (LotNotFoundException)
+                {
+                    return Results.NotFound();
+                }
+                catch (MoveInternalLotValidationException ex)
+                {
+                    return Results.BadRequest(new { error = ex.Message });
+                }
+            })
+            .WithName("MoveInternalLot");
+
         group.MapGet("/", async (LotQueryService service, CancellationToken ct) =>
             {
                 var result = await service.GetAllAsync(ct);

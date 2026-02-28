@@ -60,6 +60,21 @@ public class Lot
         UpdatedAt = utcNow;
     }
 
+    public void Move(Guid newLocationId, DateTime utcNow)
+    {
+        if (Status != LotStatus.Stored)
+            throw new InvalidOperationException($"Cannot move a lot with status '{Status}'. Lot must be in 'Stored' status.");
+
+        if (LocationId is null)
+            throw new InvalidOperationException("Cannot move a lot that has no location assigned.");
+
+        if (newLocationId == Guid.Empty)
+            throw new ArgumentException("NewLocationId is required.", nameof(newLocationId));
+
+        LocationId = newLocationId;
+        UpdatedAt = utcNow;
+    }
+
     public void SetStatus(LotStatus status, DateTime utcNow)
     {
         Status = status;
