@@ -34,5 +34,11 @@ public class WarehouseRepository : IWarehouseRepository
             .AsNoTracking()
             .FirstOrDefaultAsync(w => w.WarehouseId == id, cancellationToken);
     }
-}
 
+    public async Task UpdateAsync(Warehouse warehouse, CancellationToken cancellationToken = default)
+    {
+        // Entité chargée en AsNoTracking côté service: on doit l'attacher pour persister les modifications.
+        _dbContext.Warehouses.Update(warehouse);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+}

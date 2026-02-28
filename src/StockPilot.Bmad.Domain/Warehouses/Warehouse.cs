@@ -47,4 +47,23 @@ public class Warehouse
         Status = status;
         UpdatedAt = utcNow;
     }
+
+    public void Update(string name, string address, DateTime utcNow)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Warehouse name is required", nameof(name));
+
+        if (string.IsNullOrWhiteSpace(address))
+            throw new ArgumentException("Warehouse address is required", nameof(address));
+
+        Name = name.Trim();
+        Address = address.Trim();
+        UpdatedAt = utcNow;
+    }
+
+    public void Close(DateTime utcNow)
+    {
+        Status = WarehouseStatus.Closed;
+        UpdatedAt = utcNow;
+    }
 }

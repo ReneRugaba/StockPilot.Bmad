@@ -43,7 +43,44 @@ public static class WarehouseEndpoints
             })
             .WithName("GetWarehouseById");
 
+        group.MapPut("/{warehouseId:guid}", async (Guid warehouseId, [FromBody] UpdateWarehouseRequestDto dto, WarehouseService service, CancellationToken ct) =>
+            {
+                try
+                {
+                    var request = new UpdateWarehouseRequest
+                    {
+                        Name = dto.Name,
+                        Address = dto.Address
+                    };
+
+                    var result = await service.UpdateAsync(warehouseId, request, ct);
+                    return Results.Ok(result);
+                }
+                catch (WarehouseValidationException ex)
+                {
+                    return Results.BadRequest(new { error = ex.Message });
+                }
+                catch (WarehouseNotFoundException)
+                {
+                    return Results.NotFound();
+                }
+            })
+            .WithName("UpdateWarehouse");
+
+        group.MapDelete("/{warehouseId:guid}", async (Guid warehouseId, WarehouseService service, CancellationToken ct) =>
+            {
+                try
+                {
+                    await service.CloseAsync(warehouseId, ct);
+                    return Results.NoContent();
+                }
+                catch (WarehouseNotFoundException)
+                {
+                    return Results.NotFound();
+                }
+            })
+            .WithName("CloseWarehouse");
+
         return app;
     }
 }
-
