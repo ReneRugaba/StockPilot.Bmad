@@ -6,6 +6,12 @@
 <h2>Emplacements</h2>
 
 <div class="mb-3">
+    <a class="btn btn-primary" href="/locations/new">Nouvel emplacement</a>
+</div>
+
+<ApiError Message="@_error" Details="@_errorDetails" />
+
+<div class="mb-3">
     <label>Filtrer par entrepôt :</label>
     <select class="form-select w-auto d-inline-block ms-2" @onchange="OnWarehouseChanged">
         <option value="">— Tous —</option>
@@ -20,15 +26,11 @@
 {
     <p>Chargement...</p>
 }
-else if (_error is not null)
-{
-    <div class="alert alert-danger">Erreur : @_error</div>
-}
 else
 {
     <table class="table table-striped">
         <thead>
-            <tr><th>Code</th><th>Label</th><th>Statut</th><th>Entrepôt</th><th>Créé le</th></tr>
+            <tr><th>Code</th><th>Label</th><th>Statut</th><th>Entrepôt</th><th>Créé le</th><th></th></tr>
         </thead>
         <tbody>
             @foreach (var l in _locations)
@@ -39,6 +41,10 @@ else
                     <td>@l.Status</td>
                     <td>@(_warehouses.FirstOrDefault(w => w.WarehouseId == l.WarehouseId)?.Name ?? "—")</td>
                     <td>@l.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-secondary" href="/locations/@l.LocationId/edit">Modifier</a>
+                        <button class="btn btn-sm btn-outline-danger" disabled="@_busy" @onclick="() => DisableAsync(l.LocationId)">Désactiver</button>
+                    </td>
                 </tr>
             }
         </tbody>
@@ -49,15 +55,26 @@ else
     private List<LocationDto> _locations = new();
     private List<WarehouseDto> _warehouses = new();
     private bool _loading = true;
+    private bool _busy;
     private string? _error;
+    private string? _errorDetails;
 
     protected override async Task OnInitializedAsync()
     {
+        await ReloadAllAsync();
+    }
+
+    private async Task ReloadAllAsync()
+    {
+        _loading = true;
+        _error = null;
+        _errorDetails = null;
         try
         {
             _warehouses = await Api.GetWarehousesAsync() ?? new();
             _locations = await Api.GetLocationsAsync() ?? new();
         }
+        catch (ApiException ex) { _error = ex.Message; _errorDetails = ex.Body; }
         catch (Exception ex) { _error = ex.Message; }
         finally { _loading = false; }
     }
@@ -66,6 +83,7 @@ else
     {
         _loading = true;
         _error = null;
+        _errorDetails = null;
         try
         {
             var val = e.Value?.ToString();
@@ -73,7 +91,24 @@ else
                 ? await Api.GetLocationsAsync() ?? new()
                 : await Api.GetLocationsByWarehouseAsync(Guid.Parse(val)) ?? new();
         }
+        catch (ApiException ex) { _error = ex.Message; _errorDetails = ex.Body; }
         catch (Exception ex) { _error = ex.Message; }
         finally { _loading = false; }
+    }
+
+    private async Task DisableAsync(Guid id)
+    {
+        _busy = true;
+        _error = null;
+        _errorDetails = null;
+
+        try
+        {
+            await Api.DisableLocationAsync(id);
+            await ReloadAllAsync();
+        }
+        catch (ApiException ex) { _error = ex.Message; _errorDetails = ex.Body; }
+        catch (Exception ex) { _error = ex.Message; }
+        finally { _busy = false; }
     }
 }

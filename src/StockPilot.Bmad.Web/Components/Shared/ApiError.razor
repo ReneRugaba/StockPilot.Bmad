@@ -1,0 +1,18 @@
+﻿@if (!string.IsNullOrWhiteSpace(Message))
+{
+    <div class="alert alert-danger">@Message</div>
+
+    if (!string.IsNullOrWhiteSpace(Details))
+    {
+        <details class="mt-2">
+            <summary>Détails</summary>
+            <pre class="mt-2">@Details</pre>
+        </details>
+    }
+}
+
+@code {
+    [Parameter] public string? Message { get; set; }
+    [Parameter] public string? Details { get; set; }
+}
+

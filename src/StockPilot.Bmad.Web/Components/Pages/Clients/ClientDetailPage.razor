@@ -20,6 +20,14 @@ else if (_client is null)
 else
 {
     <h2 class="mt-3">@_client.Name</h2>
+
+    <div class="mb-3">
+        <a class="btn btn-outline-secondary" href="/clients/@_client.ClientId/edit">Modifier</a>
+        <button class="btn btn-outline-danger ms-2" disabled="@_busy" @onclick="DisableAsync">Désactiver</button>
+    </div>
+
+    <ApiError Message="@_error" Details="@_errorDetails" />
+
     <table class="table table-bordered w-auto mt-3">
         <tr><th>ID</th><td>@_client.ClientId</td></tr>
         <tr><th>Email</th><td>@_client.ContactEmail</td></tr>
@@ -32,12 +40,42 @@ else
     [Parameter] public Guid Id { get; set; }
     private ClientDto? _client;
     private bool _loading = true;
+    private bool _busy = false;
     private string? _error;
+    private string? _errorDetails;
 
     protected override async Task OnInitializedAsync()
     {
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+        _errorDetails = null;
+
         try { _client = await Api.GetClientAsync(Id); }
+        catch (ApiException ex) { _error = ex.Message; _errorDetails = ex.Body; }
         catch (Exception ex) { _error = ex.Message; }
         finally { _loading = false; }
+    }
+
+    private async Task DisableAsync()
+    {
+        if (_client is null) return;
+
+        _busy = true;
+        _error = null;
+        _errorDetails = null;
+
+        try
+        {
+            await Api.DisableClientAsync(_client.ClientId);
+            await ReloadAsync();
+        }
+        catch (ApiException ex) { _error = ex.Message; _errorDetails = ex.Body; }
+        catch (Exception ex) { _error = ex.Message; }
+        finally { _busy = false; }
     }
 }

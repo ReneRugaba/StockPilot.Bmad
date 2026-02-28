@@ -5,13 +5,15 @@
 
 <h2>Clients</h2>
 
+<div class="mb-3">
+    <a class="btn btn-primary" href="/clients/new">Nouveau client</a>
+</div>
+
+<ApiError Message="@_error" Details="@_errorDetails" />
+
 @if (_loading)
 {
     <p>Chargement...</p>
-}
-else if (_error is not null)
-{
-    <div class="alert alert-danger">Erreur : @_error</div>
 }
 else
 {
@@ -29,7 +31,11 @@ else
                     <td>@c.ContactEmail</td>
                     <td>@c.Status</td>
                     <td>@c.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</td>
-                    <td><a href="/clients/@c.ClientId">Détail</a></td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-link" href="/clients/@c.ClientId">Détail</a>
+                        <a class="btn btn-sm btn-outline-secondary" href="/clients/@c.ClientId/edit">Modifier</a>
+                        <button class="btn btn-sm btn-outline-danger" disabled="@_busy" @onclick="() => DisableAsync(c.ClientId)">Désactiver</button>
+                    </td>
                 </tr>
             }
         </tbody>
@@ -39,12 +45,37 @@ else
 @code {
     private List<ClientDto> _clients = new();
     private bool _loading = true;
+    private bool _busy = false;
     private string? _error;
+    private string? _errorDetails;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    private async Task ReloadAsync()
     {
+        _loading = true;
+        _error = null;
+        _errorDetails = null;
+
         try { _clients = await Api.GetClientsAsync() ?? new(); }
+        catch (ApiException ex) { _error = ex.Message; _errorDetails = ex.Body; }
         catch (Exception ex) { _error = ex.Message; }
         finally { _loading = false; }
+    }
+
+    private async Task DisableAsync(Guid id)
+    {
+        _busy = true;
+        _error = null;
+        _errorDetails = null;
+
+        try
+        {
+            await Api.DisableClientAsync(id);
+            await ReloadAsync();
+        }
+        catch (ApiException ex) { _error = ex.Message; _errorDetails = ex.Body; }
+        catch (Exception ex) { _error = ex.Message; }
+        finally { _busy = false; }
     }
 }

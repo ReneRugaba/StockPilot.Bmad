@@ -20,6 +20,14 @@ else if (_warehouse is null)
 else
 {
     <h2 class="mt-3">@_warehouse.Name</h2>
+
+    <div class="mb-3">
+        <a class="btn btn-outline-secondary" href="/warehouses/@_warehouse.WarehouseId/edit">Modifier</a>
+        <button class="btn btn-outline-danger ms-2" disabled="@_busy" @onclick="CloseAsync">Fermer</button>
+    </div>
+
+    <ApiError Message="@_error" Details="@_errorDetails" />
+
     <table class="table table-bordered w-auto mt-3">
         <tr><th>ID</th><td>@_warehouse.WarehouseId</td></tr>
         <tr><th>Adresse</th><td>@_warehouse.Address</td></tr>
@@ -56,16 +64,46 @@ else
     private List<LocationDto> _locations = new();
     private bool _loading = true;
     private bool _loadingLocations = true;
+    private bool _busy;
     private string? _error;
+    private string? _errorDetails;
 
     protected override async Task OnInitializedAsync()
     {
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+        _errorDetails = null;
+
         try
         {
             _warehouse = await Api.GetWarehouseAsync(Id);
             _locations = await Api.GetLocationsByWarehouseAsync(Id) ?? new();
         }
+        catch (ApiException ex) { _error = ex.Message; _errorDetails = ex.Body; }
         catch (Exception ex) { _error = ex.Message; }
         finally { _loading = false; _loadingLocations = false; }
+    }
+
+    private async Task CloseAsync()
+    {
+        if (_warehouse is null) return;
+
+        _busy = true;
+        _error = null;
+        _errorDetails = null;
+
+        try
+        {
+            await Api.CloseWarehouseAsync(_warehouse.WarehouseId);
+            await ReloadAsync();
+        }
+        catch (ApiException ex) { _error = ex.Message; _errorDetails = ex.Body; }
+        catch (Exception ex) { _error = ex.Message; }
+        finally { _busy = false; }
     }
 }

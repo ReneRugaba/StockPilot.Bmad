@@ -1,0 +1,126 @@
+﻿﻿@page "/clients/new"
+@page "/clients/{Id:guid}/edit"
+@inject ApiClient Api
+@inject NavigationManager Nav
+
+<PageTitle>@(_isNew ? "Nouveau client" : "Modifier client")</PageTitle>
+
+<a href="/clients">← Retour aux clients</a>
+
+<h2 class="mt-3">@(_isNew ? "Créer un client" : "Modifier le client")</h2>
+
+<ApiError Message="@_error" Details="@_errorDetails" />
+
+@if (_loading)
+{
+    <p>Chargement...</p>
+}
+else
+{
+    <EditForm Model="_model" FormName="ClientEditForm" OnValidSubmit="SaveAsync">
+        <DataAnnotationsValidator />
+
+        <div class="mb-3">
+            <label class="form-label">Nom</label>
+            <InputText class="form-control" @bind-Value="_model.Name" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <InputText class="form-control" @bind-Value="_model.ContactEmail" />
+        </div>
+
+        <button class="btn btn-primary" type="submit" disabled="@_saving">
+            @(_saving ? "Enregistrement..." : "Enregistrer")
+        </button>
+        <a class="btn btn-secondary ms-2" href="/clients">Annuler</a>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public Guid? Id { get; set; }
+
+    private bool _isNew => Id is null;
+    private bool _loading = true;
+    private bool _saving = false;
+    private string? _error;
+    private string? _errorDetails;
+
+    private UpdateClientRequest _model = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (_isNew)
+        {
+            _loading = false;
+            return;
+        }
+
+        try
+        {
+            var client = await Api.GetClientAsync(Id!.Value);
+            if (client is null)
+            {
+                _error = "Client introuvable.";
+                return;
+            }
+
+            _model = new UpdateClientRequest
+            {
+                Name = client.Name,
+                ContactEmail = client.ContactEmail
+            };
+        }
+        catch (ApiException ex)
+        {
+            _error = ex.Message;
+            _errorDetails = ex.Body;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        _error = null;
+        _errorDetails = null;
+
+        try
+        {
+            if (_isNew)
+            {
+                var created = await Api.CreateClientAsync(new CreateClientRequest { Name = _model.Name, ContactEmail = _model.ContactEmail });
+                if (created is not null)
+                    Nav.NavigateTo($"/clients/{created.ClientId}");
+                else
+                    Nav.NavigateTo("/clients");
+            }
+            else
+            {
+                await Api.UpdateClientAsync(Id!.Value, _model);
+                Nav.NavigateTo($"/clients/{Id.Value}");
+            }
+        }
+        catch (ApiException ex)
+        {
+            _error = ex.Message;
+            _errorDetails = ex.Body;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}
+

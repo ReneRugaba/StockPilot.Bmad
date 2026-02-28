@@ -1,0 +1,84 @@
+﻿﻿@page "/lots/{Id:guid}/edit"
+@inject ApiClient Api
+@inject NavigationManager Nav
+
+<PageTitle>Modifier lot</PageTitle>
+
+<a href="/lots/@Id">← Retour au lot</a>
+
+<h2 class="mt-3">Modifier le lot</h2>
+
+<ApiError Message="@_error" Details="@_errorDetails" />
+
+@if (_loading)
+{
+    <p>Chargement...</p>
+}
+else if (_lot is null)
+{
+    <div class="alert alert-warning">Lot introuvable.</div>
+}
+else
+{
+    <EditForm Model="_model" FormName="LotEditForm" OnValidSubmit="SaveAsync">
+        <DataAnnotationsValidator />
+
+        <div class="mb-3">
+            <label class="form-label">Référence</label>
+            <InputText class="form-control" @bind-Value="_model.Reference" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Description</label>
+            <InputText class="form-control" @bind-Value="_model.Description" />
+        </div>
+
+        <button class="btn btn-primary" type="submit" disabled="@_saving">
+            @(_saving ? "Enregistrement..." : "Enregistrer")
+        </button>
+        <a class="btn btn-secondary ms-2" href="/lots/@Id">Annuler</a>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private LotDetailDto? _lot;
+    private UpdateLotRequest _model = new();
+    private bool _loading = true;
+    private bool _saving;
+    private string? _error;
+    private string? _errorDetails;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _lot = await Api.GetLotAsync(Id);
+            if (_lot is not null)
+            {
+                _model = new UpdateLotRequest { Reference = _lot.Reference, Description = _lot.Description };
+            }
+        }
+        catch (ApiException ex) { _error = ex.Message; _errorDetails = ex.Body; }
+        catch (Exception ex) { _error = ex.Message; }
+        finally { _loading = false; }
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        _error = null;
+        _errorDetails = null;
+
+        try
+        {
+            await Api.UpdateLotAsync(Id, _model);
+            Nav.NavigateTo($"/lots/{Id}");
+        }
+        catch (ApiException ex) { _error = ex.Message; _errorDetails = ex.Body; }
+        catch (Exception ex) { _error = ex.Message; }
+        finally { _saving = false; }
+    }
+}
+

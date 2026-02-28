@@ -1,4 +1,4 @@
-﻿using StockPilot.Bmad.Domain.Lots;
+﻿﻿using StockPilot.Bmad.Domain.Lots;
 
 namespace StockPilot.Bmad.Application.Lots;
 
