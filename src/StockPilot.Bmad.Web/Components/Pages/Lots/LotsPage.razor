@@ -1,9 +1,14 @@
 ﻿@page "/lots"
+@rendermode InteractiveServer
 @inject ApiClient Api
 
 <PageTitle>Lots</PageTitle>
 
 <h2>Lots</h2>
+
+<div class="mb-3">
+    <a class="btn btn-primary" href="/lots/inbound">Nouveau dépôt (INBOUND)</a>
+</div>
 
 @if (_loading)
 {

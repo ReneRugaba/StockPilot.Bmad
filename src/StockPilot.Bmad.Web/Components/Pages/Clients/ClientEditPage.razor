@@ -1,5 +1,6 @@
-﻿﻿@page "/clients/new"
+﻿@page "/clients/new"
 @page "/clients/{Id:guid}/edit"
+@rendermode InteractiveServer
 @inject ApiClient Api
 @inject NavigationManager Nav
 
@@ -98,14 +99,39 @@ else
             {
                 var created = await Api.CreateClientAsync(new CreateClientRequest { Name = _model.Name, ContactEmail = _model.ContactEmail });
                 if (created is not null)
-                    Nav.NavigateTo($"/clients/{created.ClientId}");
+                {
+                    try
+                    {
+                        Nav.NavigateTo($"/clients/{created.ClientId}", forceLoad: true);
+                    }
+                    catch (NavigationException)
+                    {
+                        // Expected exception from NavigateTo
+                    }
+                }
                 else
-                    Nav.NavigateTo("/clients");
+                {
+                    try
+                    {
+                        Nav.NavigateTo("/clients", forceLoad: true);
+                    }
+                    catch (NavigationException)
+                    {
+                        // Expected exception from NavigateTo
+                    }
+                }
             }
             else
             {
                 await Api.UpdateClientAsync(Id!.Value, _model);
-                Nav.NavigateTo($"/clients/{Id.Value}");
+                try
+                {
+                    Nav.NavigateTo($"/clients/{Id.Value}", forceLoad: true);
+                }
+                catch (NavigationException)
+                {
+                    // Expected exception from NavigateTo
+                }
             }
         }
         catch (ApiException ex)
@@ -123,4 +149,3 @@ else
         }
     }
 }
-

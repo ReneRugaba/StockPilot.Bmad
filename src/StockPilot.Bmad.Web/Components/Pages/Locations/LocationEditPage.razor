@@ -1,5 +1,6 @@
-﻿﻿@page "/locations/new"
+﻿@page "/locations/new"
 @page "/locations/{Id:guid}/edit"
+@rendermode InteractiveServer
 @inject ApiClient Api
 @inject NavigationManager Nav
 
@@ -103,12 +104,26 @@ else
             if (_isNew)
             {
                 var created = await Api.CreateLocationAsync(_model);
-                Nav.NavigateTo("/locations");
+                try
+                {
+                    Nav.NavigateTo("/locations", forceLoad: true);
+                }
+                catch (NavigationException)
+                {
+                    // Expected exception from NavigateTo
+                }
             }
             else
             {
                 await Api.UpdateLocationAsync(Id!.Value, new UpdateLocationRequest { Code = _model.Code, Label = _model.Label });
-                Nav.NavigateTo("/locations");
+                try
+                {
+                    Nav.NavigateTo("/locations", forceLoad: true);
+                }
+                catch (NavigationException)
+                {
+                    // Expected exception from NavigateTo
+                }
             }
         }
         catch (ApiException ex) { _error = ex.Message; _errorDetails = ex.Body; }
@@ -116,4 +131,3 @@ else
         finally { _saving = false; }
     }
 }
-

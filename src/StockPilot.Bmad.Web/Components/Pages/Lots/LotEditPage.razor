@@ -1,4 +1,5 @@
-﻿﻿@page "/lots/{Id:guid}/edit"
+﻿@page "/lots/{Id:guid}/edit"
+@rendermode InteractiveServer
 @inject ApiClient Api
 @inject NavigationManager Nav
 
@@ -74,11 +75,17 @@ else
         try
         {
             await Api.UpdateLotAsync(Id, _model);
-            Nav.NavigateTo($"/lots/{Id}");
+            try
+            {
+                Nav.NavigateTo($"/lots/{Id}", forceLoad: true);
+            }
+            catch (NavigationException)
+            {
+                // Expected exception from NavigateTo
+            }
         }
         catch (ApiException ex) { _error = ex.Message; _errorDetails = ex.Body; }
         catch (Exception ex) { _error = ex.Message; }
         finally { _saving = false; }
     }
 }
-

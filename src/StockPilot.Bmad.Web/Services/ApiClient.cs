@@ -79,6 +79,7 @@ public class ApiClient
     public Task<LotDetailDto?> GetLotAsync(Guid id) => _http.GetFromJsonAsync<LotDetailDto>($"lots/{id}");
     public Task<LotDto?> UpdateLotAsync(Guid id, UpdateLotRequest request) => PutAsync<UpdateLotRequest, LotDto>($"lots/{id}", request);
     public Task ArchiveLotAsync(Guid id) => DeleteAsync($"lots/{id}");
+    public Task<LotDto?> CreateInboundLotAsync(InboundLotRequest request) => PostAsync<InboundLotRequest, LotDto>("lots/inbound", request);
 
     // --- Movements ---
     public Task<List<MovementDto>?> GetMovementsByLotAsync(Guid lotId) => _http.GetFromJsonAsync<List<MovementDto>>($"lots/{lotId}/movements");
@@ -205,3 +206,12 @@ public class UpdateLotRequest
     public string Reference { get; set; } = string.Empty;
     public string? Description { get; set; }
 }
+
+public class InboundLotRequest
+{
+    public Guid ClientId { get; set; }
+    public Guid LocationId { get; set; }
+    public string Reference { get; set; } = string.Empty;
+    public string? Description { get; set; }
+}
+

@@ -1,5 +1,6 @@
-﻿﻿@page "/warehouses/new"
+﻿@page "/warehouses/new"
 @page "/warehouses/{Id:guid}/edit"
+@rendermode InteractiveServer
 @inject ApiClient Api
 @inject NavigationManager Nav
 
@@ -84,14 +85,39 @@ else
             {
                 var created = await Api.CreateWarehouseAsync(new CreateWarehouseRequest { Name = _model.Name, Address = _model.Address });
                 if (created is not null)
-                    Nav.NavigateTo($"/warehouses/{created.WarehouseId}");
+                {
+                    try
+                    {
+                        Nav.NavigateTo($"/warehouses/{created.WarehouseId}", forceLoad: true);
+                    }
+                    catch (NavigationException)
+                    {
+                        // Expected exception from NavigateTo
+                    }
+                }
                 else
-                    Nav.NavigateTo("/warehouses");
+                {
+                    try
+                    {
+                        Nav.NavigateTo("/warehouses", forceLoad: true);
+                    }
+                    catch (NavigationException)
+                    {
+                        // Expected exception from NavigateTo
+                    }
+                }
             }
             else
             {
                 await Api.UpdateWarehouseAsync(Id!.Value, _model);
-                Nav.NavigateTo($"/warehouses/{Id.Value}");
+                try
+                {
+                    Nav.NavigateTo($"/warehouses/{Id.Value}", forceLoad: true);
+                }
+                catch (NavigationException)
+                {
+                    // Expected exception from NavigateTo
+                }
             }
         }
         catch (ApiException ex) { _error = ex.Message; _errorDetails = ex.Body; }
@@ -99,4 +125,3 @@ else
         finally { _saving = false; }
     }
 }
-

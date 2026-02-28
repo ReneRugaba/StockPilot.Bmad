@@ -1,0 +1,139 @@
+﻿@page "/lots/inbound"
+@rendermode InteractiveServer
+@inject ApiClient Api
+@inject NavigationManager Nav
+
+<PageTitle>Dépôt d'un lot (INBOUND)</PageTitle>
+
+<a href="/lots">← Retour aux lots</a>
+
+<h2 class="mt-3">Dépôt d'un lot (INBOUND)</h2>
+
+<ApiError Message="@_error" Details="@_errorDetails" />
+
+@if (_loading)
+{
+    <p>Chargement...</p>
+}
+else
+{
+    <EditForm Model="_model" FormName="InboundLotForm" OnValidSubmit="SaveAsync">
+        <DataAnnotationsValidator />
+
+        <div class="mb-3">
+            <label class="form-label">Client *</label>
+            <select class="form-select" @bind="_model.ClientId" required>
+                <option value="@Guid.Empty">— Choisir un client —</option>
+                @foreach (var c in _clients)
+                {
+                    <option value="@c.ClientId">@c.Name</option>
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Emplacement *</label>
+            <select class="form-select" @bind="_model.LocationId" required>
+                <option value="@Guid.Empty">— Choisir un emplacement —</option>
+                @foreach (var l in _locations)
+                {
+                    <option value="@l.LocationId">@l.Code - @l.Label (@_warehouses.FirstOrDefault(w => w.WarehouseId == l.WarehouseId)?.Name)</option>
+                }
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Référence *</label>
+            <InputText class="form-control" @bind-Value="_model.Reference" required />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Description</label>
+            <InputText class="form-control" @bind-Value="_model.Description" />
+        </div>
+
+        <button class="btn btn-primary" type="submit" disabled="@(_saving || !IsFormValid())">
+            @(_saving ? "Enregistrement..." : "Créer le lot")
+        </button>
+        <a class="btn btn-secondary ms-2" href="/lots">Annuler</a>
+    </EditForm>
+}
+
+@code {
+    private List<ClientDto> _clients = new();
+    private List<LocationDto> _locations = new();
+    private List<WarehouseDto> _warehouses = new();
+    private bool _loading = true;
+    private bool _saving;
+    private string? _error;
+    private string? _errorDetails;
+
+    private InboundLotRequest _model = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _clients = await Api.GetClientsAsync() ?? new();
+            _locations = await Api.GetLocationsAsync() ?? new();
+            _warehouses = await Api.GetWarehousesAsync() ?? new();
+        }
+        catch (ApiException ex)
+        {
+            _error = ex.Message;
+            _errorDetails = ex.Body;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private bool IsFormValid()
+    {
+        return _model.ClientId != Guid.Empty 
+            && _model.LocationId != Guid.Empty 
+            && !string.IsNullOrWhiteSpace(_model.Reference);
+    }
+
+    private async Task SaveAsync()
+    {
+        _saving = true;
+        _error = null;
+        _errorDetails = null;
+
+        try
+        {
+            var created = await Api.CreateInboundLotAsync(_model);
+            if (created is not null)
+            {
+                try
+                {
+                    Nav.NavigateTo("/lots", forceLoad: true);
+                }
+                catch (NavigationException)
+                {
+                    // Expected exception from NavigateTo
+                }
+            }
+        }
+        catch (ApiException ex)
+        {
+            _error = ex.Message;
+            _errorDetails = ex.Body;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _saving = false;
+        }
+    }
+}
+
