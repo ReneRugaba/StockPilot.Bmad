@@ -56,18 +56,12 @@ public class DemoDataSeeder
         // Lots
         var lot1 = Lot.CreateInbound(client1.ClientId, loc1_3.LocationId, "LOT-2024-001", "Matériaux de construction", now);
         var lot2 = Lot.CreateInbound(client2.ClientId, loc2_2.LocationId, "LOT-2024-002", "Pièces informatiques", now);
-        var lot3 = Lot.CreateInbound(client1.ClientId, Guid.Empty, "LOT-2024-003", "Équipements en transit", now);
+        var lot3 = Lot.CreateInbound(client1.ClientId, loc1_4.LocationId, "LOT-2024-003", "Équipements en transit", now);
 
         _context.Lots.Add(lot1);
         _context.Lots.Add(lot2);
         _context.Lots.Add(lot3);
 
-        // Movements - uniquement pour les lots avec location
-        var mov1 = Movement.CreateInbound(lot1.LotId, Guid.Empty, loc1_3.LocationId, now, "Dépôt initial");
-        var mov2 = Movement.CreateInbound(lot2.LotId, Guid.Empty, loc2_2.LocationId, now, "Réception fournisseur");
-
-        _context.Movements.Add(mov1);
-        _context.Movements.Add(mov2);
 
         await _context.SaveChangesAsync(ct);
     }
