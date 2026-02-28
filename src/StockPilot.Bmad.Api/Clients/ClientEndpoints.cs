@@ -43,6 +43,43 @@ public static class ClientEndpoints
             })
             .WithName("GetClientById");
 
+        group.MapPut("/{clientId:guid}", async (Guid clientId, [FromBody] UpdateClientRequestDto dto, ClientService service, CancellationToken ct) =>
+            {
+                try
+                {
+                    var request = new UpdateClientRequest
+                    {
+                        Name = dto.Name,
+                        ContactEmail = dto.ContactEmail
+                    };
+                    var result = await service.UpdateAsync(clientId, request, ct);
+                    return Results.Ok(result);
+                }
+                catch (ClientNotFoundException)
+                {
+                    return Results.NotFound();
+                }
+                catch (ClientValidationException ex)
+                {
+                    return Results.BadRequest(new { error = ex.Message });
+                }
+            })
+            .WithName("UpdateClient");
+
+        group.MapDelete("/{clientId:guid}", async (Guid clientId, ClientService service, CancellationToken ct) =>
+            {
+                try
+                {
+                    await service.DeactivateAsync(clientId, ct);
+                    return Results.NoContent();
+                }
+                catch (ClientNotFoundException)
+                {
+                    return Results.NotFound();
+                }
+            })
+            .WithName("DeactivateClient");
+
         return app;
     }
 }

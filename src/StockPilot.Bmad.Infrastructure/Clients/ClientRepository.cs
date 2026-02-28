@@ -41,5 +41,10 @@ public class ClientRepository : IClientRepository
             .AsNoTracking()
             .AnyAsync(c => c.ClientId == id, cancellationToken);
     }
-}
 
+    public async Task UpdateAsync(Client client, CancellationToken cancellationToken = default)
+    {
+        _dbContext.Clients.Update(client);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+}

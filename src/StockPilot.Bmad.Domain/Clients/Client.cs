@@ -50,6 +50,19 @@ public class Client
         UpdatedAt = utcNow;
     }
 
+    public void Update(string name, string contactEmail, DateTime utcNow)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Client name is required", nameof(name));
+
+        if (!IsValidEmail(contactEmail))
+            throw new ArgumentException("Contact email is invalid", nameof(contactEmail));
+
+        Name = name.Trim();
+        ContactEmail = contactEmail.Trim();
+        UpdatedAt = utcNow;
+    }
+
     public void Touch(DateTime utcNow)
     {
         UpdatedAt = utcNow;

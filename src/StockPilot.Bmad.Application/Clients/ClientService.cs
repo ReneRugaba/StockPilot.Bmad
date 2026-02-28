@@ -43,6 +43,38 @@ public class ClientService
         return client is null ? null : ToDto(client);
     }
 
+    public async Task<ClientDto> UpdateAsync(Guid clientId, UpdateClientRequest request, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(request.Name))
+            throw new ClientValidationException("Client name is required.");
+
+        if (!IsValidEmail(request.ContactEmail))
+            throw new ClientValidationException("Contact email is invalid.");
+
+        var client = await _repository.GetByIdAsync(clientId, cancellationToken);
+        if (client is null)
+            throw new ClientNotFoundException(clientId);
+
+        client.Update(request.Name, request.ContactEmail, DateTime.UtcNow);
+        await _repository.UpdateAsync(client, cancellationToken);
+
+        return ToDto(client);
+    }
+
+    public async Task DeactivateAsync(Guid clientId, CancellationToken cancellationToken = default)
+    {
+        var client = await _repository.GetByIdAsync(clientId, cancellationToken);
+        if (client is null)
+            throw new ClientNotFoundException(clientId);
+
+        // Idempotent : déjà INACTIVE → succès sans erreur
+        if (client.Status == ClientStatus.Inactive)
+            return;
+
+        client.SetInactive(DateTime.UtcNow);
+        await _repository.UpdateAsync(client, cancellationToken);
+    }
+
     private static ClientDto ToDto(Client client) => new()
     {
         ClientId = client.ClientId,
@@ -65,4 +97,3 @@ public class ClientService
         return trimmed.Contains("@") && trimmed.Contains('.') && trimmed.Length >= 3;
     }
 }
-

@@ -8,4 +8,5 @@ public interface IClientRepository
     Task<Client?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Client>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default);
+    Task UpdateAsync(Client client, CancellationToken cancellationToken = default);
 }
