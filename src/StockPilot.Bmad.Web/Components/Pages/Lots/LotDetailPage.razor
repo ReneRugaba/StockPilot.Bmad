@@ -29,13 +29,147 @@ else
 
     <ApiError Message="@_error" Details="@_errorDetails" />
 
+    @if (_lot.Status == "STORED")
+    {
+        <div class="card mb-4">
+            <div class="card-header">
+                <strong>Retirer le lot (OUTBOUND)</strong>
+            </div>
+            <div class="card-body">
+                <EditForm Model="_outboundModel" FormName="OutboundLotForm" OnValidSubmit="OutboundAsync">
+                    <div class="mb-3">
+                        <label class="form-label">Notes (optionnel)</label>
+                        <InputText class="form-control" @bind-Value="_outboundModel.Notes" placeholder="Raison du retrait..." />
+                    </div>
+                    <button class="btn btn-warning" type="submit" disabled="@_busy">
+                        @(_busy ? "Traitement..." : "Retirer le lot")
+                    </button>
+                </EditForm>
+            </div>
+        </div>
+    }
+
+    @if (_lot.Status == "STORED" && _lot.LocationId != Guid.Empty)
+    {
+        <div class="card mb-4">
+            <div class="card-header">
+                <strong>Déplacer le lot (MOVE)</strong>
+            </div>
+            <div class="card-body">
+                @if (_loadingLocations)
+                {
+                    <p>Chargement des emplacements...</p>
+                }
+                else
+                {
+                    <EditForm Model="_moveModel" FormName="MoveLotForm" OnValidSubmit="MoveAsync">
+                        <div class="mb-3">
+                            <label class="form-label">Emplacement de destination *</label>
+                            <select class="form-select" @bind="_moveModel.DestinationLocationId" required>
+                                <option value="@Guid.Empty">— Choisir une destination —</option>
+                                @foreach (var l in _locations.Where(loc => loc.LocationId != _lot.LocationId))
+                                {
+                                    <option value="@l.LocationId">@l.Code - @l.Label (@l.Status)</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Notes (optionnel)</label>
+                            <InputText class="form-control" @bind-Value="_moveModel.Notes" placeholder="Raison du déplacement..." />
+                        </div>
+
+                        <button class="btn btn-info" type="submit" disabled="@(_busy || _moveModel.DestinationLocationId == Guid.Empty)">
+                            @(_busy ? "Traitement..." : "Déplacer le lot")
+                        </button>
+                    </EditForm>
+                }
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <strong>Expédier le lot (DISPATCH - Transfert inter-entrepôt)</strong>
+            </div>
+            <div class="card-body">
+                @if (_loadingLocations)
+                {
+                    <p>Chargement des emplacements...</p>
+                }
+                else
+                {
+                    <EditForm Model="_dispatchModel" FormName="DispatchTransferForm" OnValidSubmit="DispatchAsync">
+                        <div class="mb-3">
+                            <label class="form-label">Emplacement de destination (autre entrepôt) *</label>
+                            <select class="form-select" @bind="_dispatchModel.DestinationLocationId" required>
+                                <option value="@Guid.Empty">— Choisir une destination —</option>
+                                @foreach (var l in _locations.Where(loc => loc.WarehouseId != _lot.WarehouseId))
+                                {
+                                    <option value="@l.LocationId">@l.Code - @l.Label (@_warehouses.FirstOrDefault(w => w.WarehouseId == l.WarehouseId)?.Name)</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Notes (optionnel)</label>
+                            <InputText class="form-control" @bind-Value="_dispatchModel.Notes" placeholder="Notes d'expédition..." />
+                        </div>
+
+                        <button class="btn btn-primary" type="submit" disabled="@(_busy || _dispatchModel.DestinationLocationId == Guid.Empty)">
+                            @(_busy ? "Traitement..." : "Expédier le lot")
+                        </button>
+                    </EditForm>
+                }
+            </div>
+        </div>
+    }
+
+    @if (_lot.Status == "IN_TRANSIT")
+    {
+        <div class="card mb-4">
+            <div class="card-header">
+                <strong>Réceptionner le lot (RECEIVE - Transfert inter-entrepôt)</strong>
+            </div>
+            <div class="card-body">
+                @if (_loadingLocations)
+                {
+                    <p>Chargement des emplacements...</p>
+                }
+                else
+                {
+                    <EditForm Model="_receiveModel" FormName="ReceiveTransferForm" OnValidSubmit="ReceiveAsync">
+                        <div class="mb-3">
+                            <label class="form-label">Emplacement de réception *</label>
+                            <select class="form-select" @bind="_receiveModel.DestinationLocationId" required>
+                                <option value="@Guid.Empty">— Choisir un emplacement —</option>
+                                @foreach (var l in _locations)
+                                {
+                                    <option value="@l.LocationId">@l.Code - @l.Label (@_warehouses.FirstOrDefault(w => w.WarehouseId == l.WarehouseId)?.Name - @l.Status)</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Notes (optionnel)</label>
+                            <InputText class="form-control" @bind-Value="_receiveModel.Notes" placeholder="Notes de réception..." />
+                        </div>
+
+                        <button class="btn btn-success" type="submit" disabled="@(_busy || _receiveModel.DestinationLocationId == Guid.Empty)">
+                            @(_busy ? "Traitement..." : "Réceptionner le lot")
+                        </button>
+                    </EditForm>
+                }
+            </div>
+        </div>
+    }
+
     <table class="table table-bordered w-auto mt-3">
         <tr><th>ID</th><td>@_lot.LotId</td></tr>
         <tr><th>Référence</th><td>@_lot.Reference</td></tr>
         <tr><th>Description</th><td>@(_lot.Description ?? "—")</td></tr>
-        <tr><th>Statut</th><td><span class="badge bg-secondary">@_lot.Status</span></td></tr>
+        <tr><th>Statut</th><td><StatusBadge Status="@_lot.Status" /></td></tr>
         <tr><th>Client</th><td><a href="/clients/@_lot.ClientId">@_lot.ClientName</a></td></tr>
-        <tr><th>Emplacement</th><td>@_lot.LocationCode</td></tr>
+        <tr><th>Emplacement</th><td>@if (_lot.LocationId != Guid.Empty) { <a href="/locations/@_lot.LocationId/edit">@_lot.LocationCode</a> } else { <span>—</span> }</td></tr>
         <tr><th>Entrepôt</th><td><a href="/warehouses/@_lot.WarehouseId">@_lot.WarehouseName</a></td></tr>
         <tr><th>Créé le</th><td>@_lot.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td></tr>
     </table>
@@ -76,22 +210,142 @@ else
     [Parameter] public Guid Id { get; set; }
     private LotDetailDto? _lot;
     private List<MovementDto> _movements = new();
+    private List<LocationDto> _locations = new();
+    private List<WarehouseDto> _warehouses = new();
     private bool _loading = true;
     private bool _loadingMovements = true;
+    private bool _loadingLocations = true;
     private bool _busy;
     private string? _error;
     private string? _errorDetails;
 
+    private OutboundLotModel _outboundModel = new();
+    private MoveLotModel _moveModel = new();
+    private DispatchTransferModel _dispatchModel = new();
+    private ReceiveTransferModel _receiveModel = new();
+
+    private class OutboundLotModel
+    {
+        public string? Notes { get; set; }
+    }
+
+    private class MoveLotModel
+    {
+        public Guid DestinationLocationId { get; set; }
+        public string? Notes { get; set; }
+    }
+
+    private class DispatchTransferModel
+    {
+        public Guid DestinationLocationId { get; set; }
+        public string? Notes { get; set; }
+    }
+
+    private class ReceiveTransferModel
+    {
+        public Guid DestinationLocationId { get; set; }
+        public string? Notes { get; set; }
+    }
+
     protected override async Task OnInitializedAsync()
     {
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _loadingMovements = true;
+        _loadingLocations = true;
+        _error = null;
+        _errorDetails = null;
+
         try
         {
             _lot = await Api.GetLotAsync(Id);
             _movements = await Api.GetMovementsByLotAsync(Id) ?? new();
+            _locations = await Api.GetLocationsAsync() ?? new();
+            _warehouses = await Api.GetWarehousesAsync() ?? new();
         }
         catch (ApiException ex) { _error = ex.Message; _errorDetails = ex.Body; }
         catch (Exception ex) { _error = ex.Message; }
-        finally { _loading = false; _loadingMovements = false; }
+        finally { _loading = false; _loadingMovements = false; _loadingLocations = false; }
+    }
+
+    private async Task OutboundAsync()
+    {
+        if (_lot is null) return;
+
+        _busy = true;
+        _error = null;
+        _errorDetails = null;
+
+        try
+        {
+            await Api.RegisterOutboundAsync(_lot.LotId, _outboundModel.Notes);
+            _outboundModel = new();
+            await ReloadAsync();
+        }
+        catch (ApiException ex) { _error = ex.Message; _errorDetails = ex.Body; }
+        catch (Exception ex) { _error = ex.Message; }
+        finally { _busy = false; }
+    }
+
+    private async Task MoveAsync()
+    {
+        if (_lot is null) return;
+
+        _busy = true;
+        _error = null;
+        _errorDetails = null;
+
+        try
+        {
+            await Api.MoveLotAsync(_lot.LotId, _moveModel.DestinationLocationId, _moveModel.Notes);
+            _moveModel = new();
+            await ReloadAsync();
+        }
+        catch (ApiException ex) { _error = ex.Message; _errorDetails = ex.Body; }
+        catch (Exception ex) { _error = ex.Message; }
+        finally { _busy = false; }
+    }
+
+    private async Task DispatchAsync()
+    {
+        if (_lot is null) return;
+
+        _busy = true;
+        _error = null;
+        _errorDetails = null;
+
+        try
+        {
+            await Api.DispatchTransferAsync(_lot.LotId, _dispatchModel.DestinationLocationId, _dispatchModel.Notes);
+            _dispatchModel = new();
+            await ReloadAsync();
+        }
+        catch (ApiException ex) { _error = ex.Message; _errorDetails = ex.Body; }
+        catch (Exception ex) { _error = ex.Message; }
+        finally { _busy = false; }
+    }
+
+    private async Task ReceiveAsync()
+    {
+        if (_lot is null) return;
+
+        _busy = true;
+        _error = null;
+        _errorDetails = null;
+
+        try
+        {
+            await Api.ReceiveTransferAsync(_lot.LotId, _receiveModel.DestinationLocationId, _receiveModel.Notes);
+            _receiveModel = new();
+            await ReloadAsync();
+        }
+        catch (ApiException ex) { _error = ex.Message; _errorDetails = ex.Body; }
+        catch (Exception ex) { _error = ex.Message; }
+        finally { _busy = false; }
     }
 
     private async Task ArchiveAsync()
@@ -105,7 +359,7 @@ else
         try
         {
             await Api.ArchiveLotAsync(_lot.LotId);
-            _lot = await Api.GetLotAsync(Id);
+            await ReloadAsync();
         }
         catch (ApiException ex) { _error = ex.Message; _errorDetails = ex.Body; }
         catch (Exception ex) { _error = ex.Message; }

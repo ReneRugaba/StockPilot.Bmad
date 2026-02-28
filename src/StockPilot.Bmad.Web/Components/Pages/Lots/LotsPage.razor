@@ -10,6 +10,47 @@
     <a class="btn btn-primary" href="/lots/inbound">Nouveau dépôt (INBOUND)</a>
 </div>
 
+<div class="card mb-3">
+    <div class="card-header">
+        <strong>Filtres</strong>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <label class="form-label">Filtrer par Client :</label>
+                <select class="form-select" @onchange="OnClientFilterChanged" value="@_filterClientId.ToString()">
+                    <option value="">— Tous —</option>
+                    @foreach (var c in _clients)
+                    {
+                        <option value="@c.ClientId">@c.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Filtrer par Entrepôt :</label>
+                <select class="form-select" @onchange="OnWarehouseFilterChanged" value="@_filterWarehouseId.ToString()">
+                    <option value="">— Tous —</option>
+                    @foreach (var w in _warehouses)
+                    {
+                        <option value="@w.WarehouseId">@w.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">&nbsp;</label>
+                <button class="btn btn-outline-secondary form-control" @onclick="ResetFilters">Réinitialiser filtres</button>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(_filterStatus))
+        {
+            <div class="alert alert-info mt-2">
+                📍 @_filterStatus
+            </div>
+        }
+    </div>
+</div>
+
 @if (_loading)
 {
     <p>Chargement...</p>
@@ -29,7 +70,7 @@ else
             {
                 <tr>
                     <td>@l.Reference</td>
-                    <td><span class="badge bg-secondary">@l.Status</span></td>
+                    <td><StatusBadge Status="@l.Status" /></td>
                     <td>@l.ClientName</td>
                     <td>@l.LocationCode</td>
                     <td>@l.WarehouseName</td>
@@ -43,13 +84,77 @@ else
 
 @code {
     private List<LotDetailDto> _lots = new();
+    private List<ClientDto> _clients = new();
+    private List<WarehouseDto> _warehouses = new();
     private bool _loading = true;
     private string? _error;
 
+    private Guid _filterClientId = Guid.Empty;
+    private Guid _filterWarehouseId = Guid.Empty;
+    private string? _filterStatus;
+
     protected override async Task OnInitializedAsync()
     {
-        try { _lots = await Api.GetLotsAsync() ?? new(); }
-        catch (Exception ex) { _error = ex.Message; }
-        finally { _loading = false; }
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        _loading = true;
+        _error = null;
+
+        try
+        {
+            _clients = await Api.GetClientsAsync() ?? new();
+            _warehouses = await Api.GetWarehousesAsync() ?? new();
+
+            if (_filterClientId != Guid.Empty)
+            {
+                _lots = await Api.GetLotsByClientAsync(_filterClientId) ?? new();
+                var client = _clients.FirstOrDefault(c => c.ClientId == _filterClientId);
+                _filterStatus = $"Filtré sur le client : {client?.Name}";
+            }
+            else if (_filterWarehouseId != Guid.Empty)
+            {
+                _lots = await Api.GetLotsByWarehouseAsync(_filterWarehouseId) ?? new();
+                var warehouse = _warehouses.FirstOrDefault(w => w.WarehouseId == _filterWarehouseId);
+                _filterStatus = $"Filtré sur l'entrepôt : {warehouse?.Name}";
+            }
+            else
+            {
+                _lots = await Api.GetLotsAsync() ?? new();
+                _filterStatus = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task OnClientFilterChanged(ChangeEventArgs e)
+    {
+        _filterWarehouseId = Guid.Empty;
+        _filterClientId = Guid.TryParse(e.Value?.ToString(), out var clientId) && clientId != Guid.Empty ? clientId : Guid.Empty;
+        await ReloadAsync();
+    }
+
+    private async Task OnWarehouseFilterChanged(ChangeEventArgs e)
+    {
+        _filterClientId = Guid.Empty;
+        _filterWarehouseId = Guid.TryParse(e.Value?.ToString(), out var warehouseId) && warehouseId != Guid.Empty ? warehouseId : Guid.Empty;
+        await ReloadAsync();
+    }
+
+    private async Task ResetFilters()
+    {
+        _filterClientId = Guid.Empty;
+        _filterWarehouseId = Guid.Empty;
+        _filterStatus = null;
+        await ReloadAsync();
     }
 }

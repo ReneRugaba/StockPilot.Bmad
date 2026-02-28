@@ -76,13 +76,26 @@ public class ApiClient
 
     // --- Lots ---
     public Task<List<LotDetailDto>?> GetLotsAsync() => _http.GetFromJsonAsync<List<LotDetailDto>>("lots");
+    public Task<List<LotDetailDto>?> GetLotsByClientAsync(Guid clientId) => _http.GetFromJsonAsync<List<LotDetailDto>>($"clients/{clientId}/lots");
+    public Task<List<LotDetailDto>?> GetLotsByWarehouseAsync(Guid warehouseId) => _http.GetFromJsonAsync<List<LotDetailDto>>($"warehouses/{warehouseId}/lots");
     public Task<LotDetailDto?> GetLotAsync(Guid id) => _http.GetFromJsonAsync<LotDetailDto>($"lots/{id}");
     public Task<LotDto?> UpdateLotAsync(Guid id, UpdateLotRequest request) => PutAsync<UpdateLotRequest, LotDto>($"lots/{id}", request);
     public Task ArchiveLotAsync(Guid id) => DeleteAsync($"lots/{id}");
     public Task<LotDto?> CreateInboundLotAsync(InboundLotRequest request) => PostAsync<InboundLotRequest, LotDto>("lots/inbound", request);
+    public Task<LotDto?> RegisterOutboundAsync(Guid lotId, string? notes) => PostAsync<OutboundLotRequest, LotDto>("lots/outbound", new OutboundLotRequest { LotId = lotId, Notes = notes });
+    public Task<LotDto?> MoveLotAsync(Guid lotId, Guid destinationLocationId, string? notes) => PostAsync<MoveLotRequest, LotDto>("lots/move", new MoveLotRequest { LotId = lotId, DestinationLocationId = destinationLocationId, Notes = notes });
+    public Task<LotDto?> DispatchTransferAsync(Guid lotId, Guid destinationLocationId, string? notes) => PostAsync<DispatchTransferRequest, LotDto>("lots/transfer/dispatch", new DispatchTransferRequest { LotId = lotId, DestinationLocationId = destinationLocationId, Notes = notes });
+    public Task<LotDto?> ReceiveTransferAsync(Guid lotId, Guid destinationLocationId, string? notes) => PostAsync<ReceiveTransferRequest, LotDto>("lots/transfer/receive", new ReceiveTransferRequest { LotId = lotId, DestinationLocationId = destinationLocationId, Notes = notes });
 
     // --- Movements ---
     public Task<List<MovementDto>?> GetMovementsByLotAsync(Guid lotId) => _http.GetFromJsonAsync<List<MovementDto>>($"lots/{lotId}/movements");
+
+    // --- DEV ---
+    public async Task ResetSeedAsync()
+    {
+        var response = await _http.PostAsync("dev/reset-seed", null);
+        await EnsureSuccessAsync(response);
+    }
 }
 
 public class ApiException : Exception
@@ -213,5 +226,32 @@ public class InboundLotRequest
     public Guid LocationId { get; set; }
     public string Reference { get; set; } = string.Empty;
     public string? Description { get; set; }
+}
+
+public class OutboundLotRequest
+{
+    public Guid LotId { get; set; }
+    public string? Notes { get; set; }
+}
+
+public class MoveLotRequest
+{
+    public Guid LotId { get; set; }
+    public Guid DestinationLocationId { get; set; }
+    public string? Notes { get; set; }
+}
+
+public class DispatchTransferRequest
+{
+    public Guid LotId { get; set; }
+    public Guid DestinationLocationId { get; set; }
+    public string? Notes { get; set; }
+}
+
+public class ReceiveTransferRequest
+{
+    public Guid LotId { get; set; }
+    public Guid DestinationLocationId { get; set; }
+    public string? Notes { get; set; }
 }
 

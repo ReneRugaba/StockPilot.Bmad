@@ -30,10 +30,9 @@ else
                 <tr>
                     <td>@c.Name</td>
                     <td>@c.ContactEmail</td>
-                    <td>@c.Status</td>
+                    <td><StatusBadge Status="@c.Status" /></td>
                     <td>@c.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</td>
                     <td class="text-end">
-                        <a class="btn btn-sm btn-link" href="/clients/@c.ClientId">Détail</a>
                         <a class="btn btn-sm btn-outline-secondary" href="/clients/@c.ClientId/edit">Modifier</a>
                         <button class="btn btn-sm btn-outline-danger" disabled="@_busy" @onclick="() => DisableAsync(c.ClientId)">Désactiver</button>
                     </td>

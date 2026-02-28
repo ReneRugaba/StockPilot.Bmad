@@ -44,14 +44,15 @@ else
     else
     {
         <table class="table table-sm">
-            <thead><tr><th>Code</th><th>Label</th><th>Statut</th></tr></thead>
+            <thead><tr><th>Code</th><th>Label</th><th>Statut</th><th></th></tr></thead>
             <tbody>
                 @foreach (var l in _locations)
                 {
                     <tr>
-                        <td>@l.Code</td>
+                        <td><a href="/locations/@l.LocationId/edit">@l.Code</a></td>
                         <td>@(l.Label ?? "—")</td>
-                        <td>@l.Status</td>
+                        <td><StatusBadge Status="@l.Status" /></td>
+                        <td><a class="btn btn-sm btn-outline-secondary" href="/locations/@l.LocationId/edit">Modifier</a></td>
                     </tr>
                 }
             </tbody>

@@ -30,7 +30,7 @@ else
                 <tr>
                     <td>@w.Name</td>
                     <td>@w.Address</td>
-                    <td>@w.Status</td>
+                    <td><StatusBadge Status="@w.Status" /></td>
                     <td>@w.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")</td>
                     <td class="text-end">
                         <a class="btn btn-sm btn-link" href="/warehouses/@w.WarehouseId">Détail</a>

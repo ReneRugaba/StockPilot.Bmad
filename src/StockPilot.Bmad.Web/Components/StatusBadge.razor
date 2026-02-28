@@ -1,0 +1,28 @@
+﻿@if (!string.IsNullOrEmpty(Status))
+{
+    <span class="badge @GetBadgeClass()">@Status</span>
+}
+
+@code {
+    [Parameter]
+    public string? Status { get; set; }
+
+    private string GetBadgeClass()
+    {
+        return Status?.ToUpper() switch
+        {
+            "ACTIVE" => "bg-success",
+            "OPEN" => "bg-success",
+            "AVAILABLE" => "bg-success",
+            "STORED" => "bg-info",
+            "IN_TRANSIT" => "bg-warning",
+            "RETRIEVED" => "bg-secondary",
+            "CLOSED" => "bg-danger",
+            "ARCHIVED" => "bg-dark",
+            "DISABLED" => "bg-danger",
+            "OCCUPIED" => "bg-warning",
+            _ => "bg-secondary"
+        };
+    }
+}
+

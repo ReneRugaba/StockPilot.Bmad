@@ -32,7 +32,7 @@ else
     <table class="table table-bordered w-auto mt-3">
         <tr><th>ID</th><td>@_client.ClientId</td></tr>
         <tr><th>Email</th><td>@_client.ContactEmail</td></tr>
-        <tr><th>Statut</th><td>@_client.Status</td></tr>
+        <tr><th>Statut</th><td><StatusBadge Status="@_client.Status" /></td></tr>
         <tr><th>Créé le</th><td>@_client.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td></tr>
     </table>
 }
