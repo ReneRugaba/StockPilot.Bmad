@@ -68,7 +68,7 @@ public class InboundLotService
     {
         LotId = lot.LotId,
         ClientId = lot.ClientId,
-        LocationId = lot.LocationId,
+        LocationId = lot.LocationId ?? Guid.Empty,
         Reference = lot.Reference,
         Description = lot.Description,
         Status = lot.Status.ToString().ToUpperInvariant(),

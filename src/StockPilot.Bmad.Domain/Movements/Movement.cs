@@ -52,5 +52,26 @@ public class Movement
             performedBy,
             string.IsNullOrWhiteSpace(reason) ? null : reason.Trim());
     }
-}
 
+    public static Movement CreateOutbound(Guid lotId, Guid fromLocationId, Guid performedBy, DateTime utcNow, string? notes = null)
+    {
+        if (lotId == Guid.Empty)
+            throw new ArgumentException("LotId is required", nameof(lotId));
+
+        if (fromLocationId == Guid.Empty)
+            throw new ArgumentException("FromLocationId is required", nameof(fromLocationId));
+
+        if (performedBy == Guid.Empty)
+            throw new ArgumentException("PerformedBy is required", nameof(performedBy));
+
+        return new Movement(
+            Guid.NewGuid(),
+            lotId,
+            MovementType.Outbound,
+            fromLocationId,
+            null,
+            utcNow,
+            performedBy,
+            string.IsNullOrWhiteSpace(notes) ? null : notes.Trim());
+    }
+}

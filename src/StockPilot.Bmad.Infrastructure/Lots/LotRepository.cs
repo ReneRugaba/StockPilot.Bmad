@@ -94,5 +94,16 @@ public class LotRepository : ILotRepository
                     WarehouseName = w.Name
                 });
     }
-}
 
+    public async Task<Domain.Lots.Lot?> GetByIdAsync(Guid lotId, CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Lots
+            .FirstOrDefaultAsync(l => l.LotId == lotId, cancellationToken);
+    }
+
+    public async Task UpdateAsync(Domain.Lots.Lot lot, CancellationToken cancellationToken = default)
+    {
+        _dbContext.Lots.Update(lot);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+}

@@ -16,7 +16,7 @@ public class LotEntityTypeConfiguration : IEntityTypeConfiguration<Lot>
             .IsRequired();
 
         builder.Property(l => l.LocationId)
-            .IsRequired();
+            .IsRequired(false);
 
         builder.Property(l => l.Reference)
             .IsRequired()
@@ -36,4 +36,3 @@ public class LotEntityTypeConfiguration : IEntityTypeConfiguration<Lot>
             .IsRequired();
     }
 }
-

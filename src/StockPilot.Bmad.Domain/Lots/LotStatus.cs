@@ -6,6 +6,6 @@ public enum LotStatus
     Stored = 2,
     Reserved = 3,
     Shipped = 4,
-    Damaged = 5
+    Damaged = 5,
+    Retrieved = 6
 }
-

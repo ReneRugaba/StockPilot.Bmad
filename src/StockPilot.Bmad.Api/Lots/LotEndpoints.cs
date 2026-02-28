@@ -31,6 +31,30 @@ public static class LotEndpoints
             })
             .WithName("InboundLot");
 
+        group.MapPost("/outbound", async ([FromBody] OutboundLotRequestDto dto, OutboundLotService service, CancellationToken ct) =>
+            {
+                try
+                {
+                    var request = new OutboundLotRequest
+                    {
+                        LotId = dto.LotId,
+                        Notes = dto.Notes
+                    };
+
+                    var result = await service.OutboundAsync(request, ct);
+                    return Results.Ok(result);
+                }
+                catch (LotNotFoundException)
+                {
+                    return Results.NotFound();
+                }
+                catch (OutboundLotValidationException ex)
+                {
+                    return Results.BadRequest(new { error = ex.Message });
+                }
+            })
+            .WithName("OutboundLot");
+
         group.MapGet("/", async (LotQueryService service, CancellationToken ct) =>
             {
                 var result = await service.GetAllAsync(ct);
