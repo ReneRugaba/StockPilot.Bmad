@@ -106,4 +106,20 @@ public class Lot
         Status = status;
         UpdatedAt = utcNow;
     }
+
+    public void UpdateMetadata(string reference, string? description, DateTime utcNow)
+    {
+        if (string.IsNullOrWhiteSpace(reference))
+            throw new ArgumentException("Reference is required", nameof(reference));
+
+        Reference = reference.Trim();
+        Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
+        UpdatedAt = utcNow;
+    }
+
+    public void Archive(DateTime utcNow)
+    {
+        Status = LotStatus.Archived;
+        UpdatedAt = utcNow;
+    }
 }

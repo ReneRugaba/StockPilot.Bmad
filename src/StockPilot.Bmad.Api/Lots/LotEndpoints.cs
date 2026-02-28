@@ -162,6 +162,48 @@ public static class LotEndpoints
             })
             .WithName("GetLotsByWarehouse");
 
+        group.MapPut("/{lotId:guid}", async (Guid lotId, [FromBody] UpdateLotRequestDto dto, UpdateLotService service, CancellationToken ct) =>
+            {
+                try
+                {
+                    var request = new UpdateLotRequest
+                    {
+                        Reference = dto.Reference,
+                        Description = dto.Description
+                    };
+
+                    var result = await service.UpdateAsync(lotId, request, ct);
+                    return Results.Ok(result);
+                }
+                catch (LotNotFoundException)
+                {
+                    return Results.NotFound();
+                }
+                catch (LotUpdateValidationException ex)
+                {
+                    return Results.BadRequest(new { error = ex.Message });
+                }
+            })
+            .WithName("UpdateLot");
+
+        group.MapDelete("/{lotId:guid}", async (Guid lotId, UpdateLotService service, CancellationToken ct) =>
+            {
+                try
+                {
+                    await service.ArchiveAsync(lotId, ct);
+                    return Results.NoContent();
+                }
+                catch (LotNotFoundException)
+                {
+                    return Results.NotFound();
+                }
+                catch (LotUpdateValidationException ex)
+                {
+                    return Results.BadRequest(new { error = ex.Message });
+                }
+            })
+            .WithName("ArchiveLot");
+
         return app;
     }
 }
