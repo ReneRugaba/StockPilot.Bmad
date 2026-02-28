@@ -19,6 +19,7 @@ public static class DependencyInjection
         services.AddScoped<MoveInternalLotService>();
         services.AddScoped<TransferLotService>();
         services.AddScoped<LotQueryService>();
+        services.AddScoped<MovementQueryService>();
         return services;
     }
 }
